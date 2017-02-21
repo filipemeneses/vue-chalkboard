@@ -30,6 +30,12 @@ export default {
       canPaint: false
     }
   },
+  watch: {
+    value (points) {
+      this.points = points
+      this.redraw()
+    }
+  },
   mounted () {
     this.defaultConfiguration()
     this.install()
@@ -119,7 +125,7 @@ export default {
       ctx.beginPath()
 
       for (var i = 0; i < points.length; i++) {
-        var point = points[i]
+        var point = new Point(points[i])
         ctx.strokeStyle = point.getHexColor()
         if (!point.dragging) {
           ctx.moveTo(point.x, point.y)
