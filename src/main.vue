@@ -24,3 +24,10 @@ export default {
   }
 }
 </script>
+
+<style media="screen">
+  .chalkboard {
+    max-width: 500px;
+    min-height: 800px;
+  }
+</style>

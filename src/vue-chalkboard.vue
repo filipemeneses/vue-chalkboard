@@ -5,6 +5,9 @@
 </template>
 
 <script>
+/**
+ * Point class used to paint board
+ */
 class Point {
   constructor ({x = 0, y = 0, color = 240, dragging = false}) {
     this.x = x
@@ -17,6 +20,7 @@ class Point {
     }
   }
 }
+
 export default {
   name: 'chalkboard',
   props: ['value'],
@@ -50,6 +54,9 @@ export default {
       this.$refs.canvas.addEventListener('mousemove', this.handleMouseMove)
       this.$refs.canvas.addEventListener('mouseup', this.disablePaint)
       this.$refs.canvas.addEventListener('mouseleave', this.disablePaint)
+
+      this.$refs.canvas.width = this.$refs.canvas.parentNode.clientWidth
+      this.$refs.canvas.height = this.$refs.canvas.parentNode.clientHeight
 
       this.paintBackground()
     },
