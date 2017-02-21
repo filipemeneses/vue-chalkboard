@@ -27,7 +27,6 @@ var webpackConfig = merge(baseWebpackConfig, {
       'process.env': "'development'"
     }),
     new webpack.optimize.OccurenceOrderPlugin(),
-    new webpack.HotModuleReplacementPlugin(),
     new webpack.NoErrorsPlugin(),
     new HtmlWebpackPlugin({
       filename: 'index.html',
