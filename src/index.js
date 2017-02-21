@@ -1,9 +1,4 @@
-import Main from './main'
+import VueChalkboard from './vue-chalkboard.vue'
 
-if (typeof window !== 'undefined') {
-  window.Main = Main
-}
-
-export {
-  Main
-}
+export default VueChalkboard
+export { VueChalkboard }

@@ -1,5 +1,5 @@
 <template>
-  <div id="app">
+  <div id="app" class="vue-chalkboard chalkboard">
     <vue-chalkboard v-model="points" v-on:drawn="onDrawn"/>
   </div>
 </template>

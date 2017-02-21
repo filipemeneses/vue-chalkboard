@@ -1,8 +1,8 @@
 import Vue from 'vue'
-import Main from './main'
+import Dev from './dev.vue'
 
 /* eslint-disable no-new */
 new Vue({
   el: '#app',
-  ...Main
+  ...Dev
 })

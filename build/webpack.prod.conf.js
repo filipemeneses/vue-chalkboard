@@ -7,7 +7,12 @@ var webpackConfig = merge(baseWebpackConfig, {
   devtool: '#source-map',
   output: {
     filename: 'js/vue-chalkboard.js',
-    chunkFilename: 'js/[id].[chunkhash].js'
+    chunkFilename: 'js/[id].[chunkhash].js',
+    library: 'VueChalkboard',
+    libraryTarget: 'umd'
+  },
+  module: {
+    loaders: utils.styleLoaders({ sourceMap: false, extract: true })
   },
   vue: {
     loaders: utils.cssLoaders({

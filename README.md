@@ -1,6 +1,6 @@
 # vue-chalkboard
 
-> A native Vue.js select component that provides similar functionality to Select2 without the overhead of jQuery.
+> A native Vue.js component that provides a simple canvas chalkboard.
 
 ## Install
 Install the package.
@@ -19,7 +19,7 @@ import VueChalkboard from 'vue-chalkboard'
 Then register the component in your javascript:
 
 ```js
-Vue.component('chalkboard', VueChalkboard.VueChalkboard);
+Vue.component('chalkboard', VueChalkboard);
 ```
 
 You may now use the component in your markup
