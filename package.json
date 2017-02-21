@@ -1,9 +1,9 @@
 {
   "name": "vue-chalkboard",
-  "version": "0.1.1",
+  "version": "1.0.0",
   "description": "A native Vue.js component that provides a simple canvas chalkboard.",
   "author": "Filipe Meneses <flcmeneses@gmail.com>",
-  "private": true,
+  "private": false,
   "main": "dist/js/vue-chalkboard.js",
   "scripts": {
     "build": "webpack -p --config build/webpack.prod.conf.js",
