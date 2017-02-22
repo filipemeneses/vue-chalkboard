@@ -1,13 +1,13 @@
 {
   "name": "vue-chalkboard",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "A native Vue.js component that provides a simple canvas chalkboard.",
   "author": "Filipe Meneses <flcmeneses@gmail.com>",
   "private": false,
   "main": "dist/js/vue-chalkboard.js",
   "scripts": {
     "build": "webpack -p --config build/webpack.prod.conf.js",
-    "dev": "webpack-dev-server --inline --hot --config build/webpack.dev.conf.js",
+    "dev": "webpack-dev-server --inline --port 3001 --hot --config build/webpack.dev.conf.js",
     "unit": "karma start test/unit/karma.conf.js --single-run"
   },
   "dependencies": {

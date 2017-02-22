@@ -27,7 +27,9 @@ export default {
 
 <style media="screen">
   .chalkboard {
+    position: absolute;
     max-width: 500px;
     min-height: 800px;
+    left: 20%;
   }
 </style>

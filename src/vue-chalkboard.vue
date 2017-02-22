@@ -126,9 +126,11 @@ export default {
      */
     handleMouseMove (event) {
       if (this.canPaint) {
+        var wrapper = event.target.parentNode
+        var pos = wrapper.getBoundingClientRect()
         var point = new Point({
-          x: event.pageX - event.target.offsetLeft,
-          y: event.pageY - event.target.offsetTop,
+          x: event.pageX - pos.left,
+          y: event.pageY - pos.top,
           dragging: true,
           mode: this.mode
         })
@@ -142,10 +144,12 @@ export default {
      * @param  {MouseEvent} event
      */
     handleMouseDown (event) {
+      var wrapper = event.target.parentNode
+      var pos = wrapper.getBoundingClientRect()
       this.canPaint = true
       var point = new Point({
-        x: event.pageX - event.target.offsetLeft,
-        y: event.pageY - event.target.offsetTop,
+        x: event.pageX - pos.left,
+        y: event.pageY - pos.top,
         mode: this.mode
       })
       this.savePoint(point)
