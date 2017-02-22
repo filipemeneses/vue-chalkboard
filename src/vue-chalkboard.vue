@@ -1,6 +1,6 @@
 <template>
   <div class="chalkboard">
-    <ul class="chalkboard__nav">
+    <ul class="chalkboard__nav" v-if="config.canvas.canDraw">
       <li class="chalkboard__nav-item"><i class="icon" :class="{'--active': mode === 'paint'}" v-on:click="changeMode('paint')" v-html="icons.write"></i></li>
       <li class="chalkboard__nav-item"><i class="icon" :class="{'--active': mode === 'erase'}" v-on:click="changeMode('erase')" v-html="icons.erase"></i></li>
     </ul>
@@ -10,21 +10,9 @@
 
 <script>
 /**
- * Global configuration
+ * Global config
  */
-var config = {
-  canvas: {
-    backgroundColor: '#444444'
-  },
-  tools: {
-    paint: {
-      size: 2
-    },
-    erase: {
-      size: 25
-    }
-  }
-}
+var config
 
 /**
  * Point class used to paint board
@@ -47,16 +35,47 @@ class Point {
 
     this.getHexColor = getColor => {
       if (this.mode === 'erase') {
-        return config.canvas.backgroundColor
+        return config.canvas ? config.canvas.backgroundColor : '#000000'
       }
       return `#${(this.color).toString(16).repeat(3)}`
     }
   }
 }
 
+/**
+* Simple is object check.
+* @param item
+* @returns {boolean}
+*/
+var isObject = function isObject (item) {
+  return (item && typeof item === 'object' && !Array.isArray(item))
+}
+
+/**
+* Deep merge two objects.
+* @param target
+* @param ...sources
+*/
+var merge = function merge (target, ...sources) {
+  if (!sources.length) return target
+  const source = sources.shift()
+
+  if (isObject(target) && isObject(source)) {
+    for (const key in source) {
+      if (isObject(source[key])) {
+        if (!target[key]) Object.assign(target, { [key]: {} })
+        merge(target[key], source[key])
+      } else {
+        Object.assign(target, { [key]: source[key] })
+      }
+    }
+  }
+  return merge(target, ...sources)
+}
+
 export default {
   name: 'chalkboard',
-  props: ['value'],
+  props: ['value', 'configuration'],
   data () {
     return {
       mode: 'paint',
@@ -65,24 +84,46 @@ export default {
         erase: require('!!raw!./assets/erase.svg')
       },
       points: [],
-      canPaint: false
+      canPaint: false,
+      config: merge({
+        canvas: {
+          backgroundColor: '#444444',
+          canDraw: true
+        },
+        tools: {
+          paint: {
+            size: 2
+          },
+          erase: {
+            size: 25
+          }
+        }
+      }, this.configuration)
     }
   },
   watch: {
     value (points) {
       this.points = points
       this.redraw()
+    },
+    'configuration.canvas.canDraw': {
+      handler: function (newConfig) {
+        this.config.canvas.canDraw = newConfig
+        this.refresh()
+        this.redraw()
+      }
     }
   },
   mounted () {
-    this.defaultConfiguration()
-    this.install()
+    config = this.config
+    this.defaultSetting()
+    this.refresh()
   },
   methods: {
     /**
-     * Set default configuration
+     * Set default setting
      */
-    defaultConfiguration () {
+    defaultSetting () {
       var ctx = this.$refs.canvas.getContext('2d')
       ctx.fillStyle = 'solid'
       ctx.lineWidth = 5
@@ -93,14 +134,20 @@ export default {
     /**
      * Add event listeners to canvas element and apply default state
      */
-    install () {
-      this.$refs.canvas.addEventListener('mousedown', this.handleMouseDown)
-      this.$refs.canvas.addEventListener('mousemove', this.handleMouseMove)
-      this.$refs.canvas.addEventListener('mouseup', this.disablePaint)
-      this.$refs.canvas.addEventListener('mouseleave', this.disablePaint)
+    refresh () {
+      this.$refs.canvas.removeEventListener('mousedown', this.handleMouseDown)
+      this.$refs.canvas.removeEventListener('mousemove', this.handleMouseMove)
+      this.$refs.canvas.removeEventListener('mouseup', this.disablePaint)
+      this.$refs.canvas.removeEventListener('mouseleave', this.disablePaint)
+      if (this.config.canvas.canDraw) {
+        this.$refs.canvas.addEventListener('mousedown', this.handleMouseDown)
+        this.$refs.canvas.addEventListener('mousemove', this.handleMouseMove)
+        this.$refs.canvas.addEventListener('mouseup', this.disablePaint)
+        this.$refs.canvas.addEventListener('mouseleave', this.disablePaint)
+      }
 
       this.$refs.canvas.width = this.$refs.canvas.parentNode.clientWidth
-      this.$refs.canvas.height = this.$refs.canvas.parentNode.clientHeight
+      this.$refs.canvas.height = this.$refs.canvas.parentNode.clientHeight - 4
 
       this.paintBackground()
     },
@@ -183,7 +230,7 @@ export default {
       }
 
       var drawPath = (mode) => {
-        ctx.lineWidth = config.tools[mode] ? config.tools[mode].size : config.tools.paint.size
+        ctx.lineWidth = this.config.tools[mode] ? this.config.tools[mode].size : this.config.tools.paint.size
         ctx.stroke()
       }
       for (i = 0; i < points.length; i++) {
@@ -201,7 +248,7 @@ export default {
         last.color = ctx.strokeStyle = color
         last.mode = point.mode
       }
-      ctx.lineWidth = config.tools[last.mode] ? config.tools[last.mode].size : config.tools.paint.size
+      ctx.lineWidth = this.config.tools[last.mode] ? this.config.tools[last.mode].size : this.config.tools.paint.size
       ctx.stroke()
     },
 
@@ -209,7 +256,7 @@ export default {
       var ctx = this.$refs.canvas.getContext('2d')
       var fillStyle = ctx.fillStyle
 
-      ctx.fillStyle = config.canvas.backgroundColor
+      ctx.fillStyle = this.config.canvas.backgroundColor
       ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
       ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height)
       ctx.fillStyle = fillStyle

@@ -1,6 +1,8 @@
 <template>
   <div id="app" class="vue-chalkboard chalkboard">
-    <vue-chalkboard v-model="points" v-on:drawn="onDrawn"/>
+    <button href="#" v-on:click="toggleCanvasDraw">Toggle edit</button>
+    {{config.canvas.canDraw}}
+    <vue-chalkboard v-model="points" v-on:drawn="onDrawn" :configuration="config"/>
   </div>
 </template>
 
@@ -14,10 +16,16 @@ export default {
   },
   data () {
     return {
+      config: {
+        canvas: {canDraw: true}
+      },
       points: []
     }
   },
   methods: {
+    toggleCanvasDraw () {
+      this.config.canvas.canDraw = !this.config.canvas.canDraw
+    },
     onDrawn (point) {
       console.log('New point', point)
     }
