@@ -6,7 +6,7 @@
     </ul>
     <canvas ref="canvas"></canvas>
     <ul class="chalkboard__footer-nav">
-      <li class="chalkboard__nav-item"><i class="icon" :class="{'--active': config.canvas.mode === 'landscape'}" v-on:click="toggleCanvasMode()" v-html="icons.landscape"></i></li>
+      <li class="chalkboard__nav-item" v-if="config.canvas.canResize"><i class="icon" :class="{'--active': config.canvas.mode === 'landscape'}" v-on:click="toggleCanvasMode()" v-html="icons.landscape"></i></li>
     </ul>
   </div>
 </template>
@@ -93,6 +93,7 @@ export default {
         canvas: {
           backgroundColor: '#444444',
           canDraw: true,
+          canResize: true,
           modes: {
             landscape: {
               getSize () {
@@ -147,6 +148,11 @@ export default {
         this.config.canvas.canDraw = newConfig
         this.refresh()
         this.redraw()
+      }
+    },
+    'configuration.canvas.canResize': {
+      handler: function (status) {
+        this.config.canvas.canResize = status
       }
     },
     'configuration.canvas.mode': {
