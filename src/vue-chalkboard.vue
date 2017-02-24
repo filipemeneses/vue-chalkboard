@@ -210,7 +210,7 @@ export default {
     updateDimensions () {
       var mode = this.config.canvas.modes[this.config.canvas.mode]
       if (!mode) this.config.canvas.modes.default
-      var currSize = this.getCanvasSize()
+      var oldSize = this.getCanvasSize()
       var newSize = mode.getSize.bind(this)()
 
       this.$refs.canvas.width = newSize.width
@@ -218,8 +218,9 @@ export default {
       this.$el.style.width = newSize.width + 'px'
       this.$el.style.height = newSize.height + 'px'
 
-      this.updatePointsThroughDimensions(currSize, newSize)
+      this.updatePointsThroughDimensions(oldSize, newSize)
       this.paintBackground()
+      this.$emit('modeChange', {oldSize, newSize})
     },
 
     /**
