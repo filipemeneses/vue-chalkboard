@@ -5,6 +5,9 @@
       <li class="chalkboard__nav-item"><i class="icon" :class="{'--active': mode === 'erase'}" v-on:click="changeMode('erase')" v-html="icons.erase"></i></li>
     </ul>
     <canvas ref="canvas"></canvas>
+    <ul class="chalkboard__footer-nav">
+      <li class="chalkboard__nav-item"><i class="icon" :class="{'--active': config.canvas.mode === 'landscape'}" v-on:click="toggleCanvasMode()" v-html="icons.landscape"></i></li>
+    </ul>
   </div>
 </template>
 
@@ -81,14 +84,47 @@ export default {
       mode: 'paint',
       icons: {
         write: require('!!raw!./assets/write.svg'),
-        erase: require('!!raw!./assets/erase.svg')
+        erase: require('!!raw!./assets/erase.svg'),
+        landscape: require('!!raw!./assets/landscape.svg')
       },
       points: [],
       canPaint: false,
       config: merge({
         canvas: {
           backgroundColor: '#444444',
-          canDraw: true
+          canDraw: true,
+          modes: {
+            landscape: {
+              getSize () {
+                var cache = {
+                  width: this.$el.parentNode.dataset.sizeWidth,
+                  height: this.$el.parentNode.dataset.sizeHeight
+                }
+                cache.width = this.$el.parentNode.dataset.sizeWidth = cache.width ? cache.width : this.$el.parentNode.clientWidth
+                cache.height = this.$el.parentNode.dataset.sizeHeight = cache.height ? cache.height : this.$el.parentNode.clientHeight
+                return {
+                  width: cache.width,
+                  height: cache.height
+                }
+              }
+            },
+            default: {
+              getSize () {
+                var cache = {
+                  width: this.$refs.canvas.parentNode.dataset.sizeWidth,
+                  height: this.$refs.canvas.parentNode.dataset.sizeHeight
+                }
+                cache.width = this.$refs.canvas.parentNode.dataset.sizeWidth = cache.width ? cache.width : this.$refs.canvas.parentNode.clientWidth
+                cache.height = this.$refs.canvas.parentNode.dataset.sizeHeight = cache.height ? cache.height : this.$refs.canvas.parentNode.clientHeight
+                return {
+                  width: cache.width,
+                  height: cache.height
+                }
+              }
+            }
+          },
+          oldMode: null,
+          mode: 'default' // Available modes: 'default', 'landscape'
         },
         tools: {
           paint: {
@@ -125,6 +161,7 @@ export default {
      */
     defaultSetting () {
       var ctx = this.$refs.canvas.getContext('2d')
+      config.canvas.modes['default'].sizeBasedOn = this.$refs.canvas.parentNode
       ctx.fillStyle = 'solid'
       ctx.lineWidth = 5
       ctx.lineJoin = 'round'
@@ -135,6 +172,16 @@ export default {
      * Add event listeners to canvas element and apply default state
      */
     refresh () {
+      this.addCanvasListeners()
+      this.addResizeListeners()
+      this.updateDimensions()
+      this.redraw()
+    },
+
+    /**
+    * Add event listeners to canvas element
+    */
+    addCanvasListeners () {
       this.$refs.canvas.removeEventListener('mousedown', this.handleMouseDown)
       this.$refs.canvas.removeEventListener('mousemove', this.handleMouseMove)
       this.$refs.canvas.removeEventListener('mouseup', this.disablePaint)
@@ -145,11 +192,61 @@ export default {
         this.$refs.canvas.addEventListener('mouseup', this.disablePaint)
         this.$refs.canvas.addEventListener('mouseleave', this.disablePaint)
       }
+    },
 
-      this.$refs.canvas.width = this.$refs.canvas.parentNode.clientWidth
-      this.$refs.canvas.height = this.$refs.canvas.parentNode.clientHeight - 4
+    /**
+    * Add event listeners to canvas element
+    */
+    addResizeListeners () {
+      this.$refs.canvas.removeEventListener('resize', this.handleResize)
+      this.$el.removeEventListener('resize', this.handleResize)
+      this.$refs.canvas.addEventListener('resize', this.handleResize)
+      this.$el.addEventListener('resize', this.handleResize)
+    },
 
+    /**
+    * Updates component size
+    */
+    updateDimensions () {
+      var mode = this.config.canvas.modes[this.config.canvas.mode]
+      if (!mode) this.config.canvas.modes.default
+      var currSize = this.getCanvasSize()
+      var newSize = mode.getSize.bind(this)()
+
+      this.$refs.canvas.width = newSize.width
+      this.$refs.canvas.height = newSize.height
+      this.$el.style.width = newSize.width + 'px'
+      this.$el.style.height = newSize.height + 'px'
+
+      this.updatePointsThroughDimensions(currSize, newSize)
       this.paintBackground()
+    },
+
+    /**
+    * Get canvas size
+    */
+    getCanvasSize () {
+      return {
+        width: this.$refs.canvas.width,
+        height: this.$refs.canvas.height
+      }
+    },
+
+    /**
+    * Updates points list though dimentions
+    */
+    updatePointsThroughDimensions (oldSize, newSize) {
+      var ratio = {
+        width: newSize.width / oldSize.width,
+        height: newSize.height / oldSize.height
+      }
+      this.points = this.points.map(function (point) {
+        point.x *= ratio.width
+        point.y *= ratio.height
+        return point
+      })
+
+      this.$emit('input', this.points)
     },
 
     /**
@@ -165,6 +262,25 @@ export default {
      */
     changeMode (mode) {
       this.mode = mode
+    },
+
+    /**
+    * Toggles canvas mode between `landscape` and `default`
+     */
+    toggleCanvasMode () {
+      config.canvas.oldMode = this.config.canvas.oldMode = this.config.canvas.mode
+      config.canvas.mode = this.config.canvas.mode = this.config.canvas.mode === 'default' ? 'landscape' : 'default'
+      this.refresh()
+    },
+
+    /**
+     * Refresh canvas listerners and size
+     */
+    handleResize () {
+      Object.keys(this.config.canvas.modes).forEach(function (mode) {
+        delete this.config.canvas.modes[mode].oldSize
+      })
+      this.refresh()
     },
 
     /**
@@ -270,19 +386,30 @@ export default {
   position: relative;
   cursor: default;
 }
-.chalkboard__nav {
+.chalkboard__nav, .chalkboard__footer-nav {
   position: absolute;
-  top: 0;
-  left: 0;
   padding: 0;
   margin: 0;
+}
+.chalkboard__nav {
+  top: 0;
+  left: 0;
+  .chalkboard__nav-item {
+    border-right: 1px solid rgba(255, 255, 255, .1);
+  }
+}
+.chalkboard__footer-nav {
+  bottom: 0;
+  right: 0;
+  .chalkboard__nav-item {
+    border-left: 1px solid rgba(255, 255, 255, .1);
+  }
 }
 .chalkboard__nav-item {
   display: block;
   float: left;
   padding: 0;
   padding: 16px;
-  border-right: 1px solid rgba(255, 255, 255, .1);
 
   .icon {
     fill: #fff;

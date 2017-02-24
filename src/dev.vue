@@ -34,10 +34,13 @@ export default {
 </script>
 
 <style media="screen">
+  #app {
+    width: 800px;
+    max-height: 400px;
+    margin: 0 auto;
+    border: 1px solid #444;
+  }
   .chalkboard {
-    position: absolute;
-    max-width: 500px;
-    min-height: 800px;
-    left: 20%;
+    width: 300px;
   }
 </style>
