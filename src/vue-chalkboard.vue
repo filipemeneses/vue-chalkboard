@@ -23,10 +23,10 @@ var config
 class Point {
 
   /**
-   * @param  {Number}  [x=0]            [description]
-   * @param  {Number}  [y=0]            [description]
-   * @param  {Number}  [color=240]      [description]
-   * @param  {Boolean} [dragging=false] [description]
+   * @param  {Number}  [x=0]            x in canvas
+   * @param  {Number}  [y=0]            y in canvas
+   * @param  {Number}  [color=240]      0 to 255
+   * @param  {Boolean} [dragging=false] If first click or holding
    * @param  {String}  mode             'erase', 'write'
    */
   constructor ({x = 0, y = 0, color = 240, dragging = false, mode = null}) {
@@ -145,6 +145,13 @@ export default {
     'configuration.canvas.canDraw': {
       handler: function (newConfig) {
         this.config.canvas.canDraw = newConfig
+        this.refresh()
+        this.redraw()
+      }
+    },
+    'configuration.canvas.mode': {
+      handler: function (mode) {
+        this.config.canvas.mode = mode
         this.refresh()
         this.redraw()
       }
