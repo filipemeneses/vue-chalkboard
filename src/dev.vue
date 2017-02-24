@@ -2,7 +2,7 @@
   <div id="app" class="vue-chalkboard chalkboard">
     <button href="#" v-on:click="toggleCanvasDraw">Toggle edit</button>
     {{config.canvas.canDraw}}
-    <vue-chalkboard v-model="points" v-on:drawn="onDrawn" :configuration="config"/>
+    <vue-chalkboard v-model="points" v-on:drawn="onDrawn" :configuration="config" @modeChange="modeChange"/>
   </div>
 </template>
 
@@ -23,6 +23,9 @@ export default {
     }
   },
   methods: {
+    modeChange (data) {
+      console.log(data.oldMode, data.newMode)
+    },
     toggleCanvasDraw () {
       this.config.canvas.canDraw = !this.config.canvas.canDraw
     },

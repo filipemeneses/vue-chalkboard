@@ -220,7 +220,6 @@ export default {
 
       this.updatePointsThroughDimensions(oldSize, newSize)
       this.paintBackground()
-      this.$emit('modeChange', {oldSize, newSize})
     },
 
     /**
@@ -271,6 +270,8 @@ export default {
     toggleCanvasMode () {
       config.canvas.oldMode = this.config.canvas.oldMode = this.config.canvas.mode
       config.canvas.mode = this.config.canvas.mode = this.config.canvas.mode === 'default' ? 'landscape' : 'default'
+
+      this.$emit('modeChange', {oldMode: config.canvas.oldMode, currMode: config.canvas.mode})
       this.refresh()
     },
 
