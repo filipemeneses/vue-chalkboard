@@ -7,6 +7,7 @@
   "main": "dist/js/vue-chalkboard.js",
   "scripts": {
     "build": "webpack -p --config build/webpack.prod.conf.js",
+    "doc": "webpack -p --config build/webpack.doc.conf.js",
     "dev": "webpack-dev-server --inline --port 3001 --hot --config build/webpack.dev.conf.js",
     "unit": "karma start test/unit/karma.conf.js --single-run"
   },
