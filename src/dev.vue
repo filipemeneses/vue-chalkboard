@@ -7,8 +7,10 @@
 
       <section class="demo">
         <div class="chalkboard-component">
-          <vue-chalkboard v-model="points" v-on:drawn="onDrawn" :configuration="config" @modeChange="modeChange"/>
+          <vue-chalkboard v-model="points" :configuration="config" @drawn="onDrawn" @modeChange="modeChange" @image="handleImage"/>
         </div>
+        <img :src="imageSrc" width="100"/>
+        {{imageSrc}}
       </section>
     </header>
 
@@ -44,7 +46,7 @@ export default {
   data () {
     return {
       config: {
-        canvas: {canDraw: true, mode: 'default', canResize: true}
+        canvas: {canDraw: true, mode: 'default', canResize: true, initialCanvas: window.localStorage.getItem('initialCanvas')}
       },
       points: []
     }
@@ -61,6 +63,10 @@ export default {
     },
     toggleCanvasDraw () {
       this.config.canvas.canDraw = !this.config.canvas.canDraw
+    },
+    handleImage (image) {
+      console.log('Saving canvas to localStorage as initialCanvas')
+      window.localStorage.setItem('initialCanvas', image)
     },
     onDrawn (point) {
       console.log('New point', point)

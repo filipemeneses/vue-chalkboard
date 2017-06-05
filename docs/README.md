@@ -47,7 +47,7 @@ Currently there is these events available
 Event       | Return value | Description
 ---         | ---          | ---
 drawn       | Point        | On point draw returns a point instance
-
+image       | Base64 image | After default delay of 500ms send a base64 image
 
 #### Models
 

@@ -12,10 +12,12 @@
 </template>
 
 <script>
+import debounce from 'debounce'
+
 /**
  * Global config
  */
-var config
+let config
 
 /**
  * Point class used to paint board
@@ -50,7 +52,7 @@ class Point {
 * @param item
 * @returns {boolean}
 */
-var isObject = function isObject (item) {
+let isObject = function isObject (item) {
   return (item && typeof item === 'object' && !Array.isArray(item))
 }
 
@@ -59,7 +61,7 @@ var isObject = function isObject (item) {
 * @param target
 * @param ...sources
 */
-var merge = function merge (target, ...sources) {
+let merge = function merge (target, ...sources) {
   if (!sources.length) return target
   const source = sources.shift()
 
@@ -78,10 +80,11 @@ var merge = function merge (target, ...sources) {
 
 export default {
   name: 'chalkboard',
-  props: ['value', 'configuration'],
+  props: ['value', 'configuration', 'exportDelay'],
   data () {
     return {
       mode: 'paint',
+      exportCanvasImageDelay: this.exportDelay || 500,
       icons: {
         write: require('!!raw!./assets/write.svg'),
         erase: require('!!raw!./assets/erase.svg'),
@@ -94,10 +97,11 @@ export default {
           backgroundColor: '#444444',
           canDraw: true,
           canResize: true,
+          initialCanvas: null,
           modes: {
             landscape: {
               getSize () {
-                var cache = {
+                let cache = {
                   width: this.$el.parentNode.dataset.sizeWidth,
                   height: this.$el.parentNode.dataset.sizeHeight
                 }
@@ -111,7 +115,7 @@ export default {
             },
             default: {
               getSize () {
-                var cache = {
+                let cache = {
                   width: this.$refs.canvas.parentNode.dataset.sizeWidth,
                   height: this.$refs.canvas.parentNode.dataset.sizeHeight
                 }
@@ -173,7 +177,7 @@ export default {
      * Set default setting
      */
     defaultSetting () {
-      var ctx = this.$refs.canvas.getContext('2d')
+      let ctx = this.$refs.canvas.getContext('2d')
       config.canvas.modes['default'].sizeBasedOn = this.$refs.canvas.parentNode
       ctx.fillStyle = 'solid'
       ctx.lineWidth = 5
@@ -221,10 +225,10 @@ export default {
     * Updates component size
     */
     updateDimensions () {
-      var mode = this.config.canvas.modes[this.config.canvas.mode]
+      let mode = this.config.canvas.modes[this.config.canvas.mode]
       if (!mode) this.config.canvas.modes.default
-      var oldSize = this.getCanvasSize()
-      var newSize = mode.getSize.bind(this)()
+      let oldSize = this.getCanvasSize()
+      let newSize = mode.getSize.bind(this)()
 
       this.$refs.canvas.width = newSize.width
       this.$refs.canvas.height = newSize.height
@@ -249,7 +253,7 @@ export default {
     * Updates points list though dimentions
     */
     updatePointsThroughDimensions (oldSize, newSize) {
-      var ratio = {
+      let ratio = {
         width: newSize.width / oldSize.width,
         height: newSize.height / oldSize.height
       }
@@ -258,6 +262,7 @@ export default {
         point.y *= ratio.height
         return point
       })
+      this.debounceExportCanvasImage = debounce(this.exportCanvasImage, this.exportCanvasImageDelay)
 
       this.$emit('input', this.points)
     },
@@ -304,9 +309,9 @@ export default {
      */
     handleMouseMove (event) {
       if (this.canPaint) {
-        var wrapper = event.target.parentNode
-        var pos = wrapper.getBoundingClientRect()
-        var point = new Point({
+        let wrapper = event.target.parentNode
+        let pos = wrapper.getBoundingClientRect()
+        let point = new Point({
           x: event.pageX - (document.body.scrollLeft || 0) - pos.left,
           y: event.pageY - (document.body.scrollTop || 0) - pos.top,
           dragging: true,
@@ -314,6 +319,7 @@ export default {
         })
         this.savePoint(point)
         this.redraw()
+        this.debounceExportCanvasImage(event)
       }
     },
 
@@ -322,10 +328,10 @@ export default {
      * @param  {MouseEvent} event
      */
     handleMouseDown (event) {
-      var wrapper = event.target.parentNode
-      var pos = wrapper.getBoundingClientRect()
+      let wrapper = event.target.parentNode
+      let pos = wrapper.getBoundingClientRect()
       this.canPaint = true
-      var point = new Point({
+      let point = new Point({
         x: event.pageX - (document.body.scrollLeft || 0) - pos.left,
         y: event.pageY - (document.body.scrollTop || 0) - pos.top,
         mode: this.mode
@@ -348,25 +354,25 @@ export default {
      * Redrawns canvas though global points variable
      */
     redraw () {
-      var ctx = this.$refs.canvas.getContext('2d')
-      var points = this.points
+      let ctx = this.$refs.canvas.getContext('2d')
+      let points = this.points
 
       this.paintBackground()
 
-      var i
-      var point
-      var last = {
+      let i
+      let point
+      let last = {
         color: null,
         mode: null
       }
 
-      var drawPath = (mode) => {
+      let drawPath = (mode) => {
         ctx.lineWidth = this.config.tools[mode] ? this.config.tools[mode].size : this.config.tools.paint.size
         ctx.stroke()
       }
       for (i = 0; i < points.length; i++) {
         point = new Point(points[i])
-        var color = point.getHexColor()
+        let color = point.getHexColor()
         if (!point.dragging || !i) {
           drawPath(last.mode || point.mode)
           ctx.beginPath()
@@ -383,14 +389,52 @@ export default {
       ctx.stroke()
     },
 
-    paintBackground () {
-      var ctx = this.$refs.canvas.getContext('2d')
-      var fillStyle = ctx.fillStyle
+    /**
+     * Draw a base 64 image to canvas
+     * @param  {String} base64Image Base 64 image
+     */
+    drawnImageForeground (base64Image) {
+      let ctx = this.$refs.canvas.getContext('2d')
 
-      ctx.fillStyle = this.config.canvas.backgroundColor
+      if (!this.initialImage) {
+        this.initialImage = new window.Image()
+        this.initialImage.onload = () => {
+          ctx.drawImage(this.initialImage, 0, 0, this.initialImage.width, this.initialImage.height, 0, 0, this.$refs.canvas.width, this.$refs.canvas.height)
+        }
+        this.initialImage.src = base64Image
+      } else {
+        ctx.drawImage(this.initialImage, 0, 0, this.initialImage.width, this.initialImage.height, 0, 0, this.$refs.canvas.width, this.$refs.canvas.height)
+      }
+    },
+
+    /**
+     * Paint a solid color to canvas
+     * @param  {String} color Hexadecimal color
+     */
+    drawnSolidColorForeground (color) {
+      let ctx = this.$refs.canvas.getContext('2d')
+      ctx.fillStyle = color
       ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
       ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height)
-      ctx.fillStyle = fillStyle
+    },
+
+    /**
+     * Fill background with default color
+     */
+    paintBackground () {
+      this.drawnSolidColorForeground(this.config.canvas.backgroundColor)
+      if (this.config.canvas.initialCanvas) {
+        this.drawnImageForeground(this.config.canvas.initialCanvas)
+      }
+    },
+
+    /**
+     * Export image
+     */
+    exportCanvasImage () {
+      let base64Image = this.$refs.canvas.toDataURL()
+      this.$emit('image', base64Image)
+      return base64Image
     }
   }
 }
