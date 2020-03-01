@@ -30,5 +30,5 @@ You may now use the component in your markup
 
 ## Documentation
 
-- [Interactive example](http://blog.filipemeneses.com.br/vue-chalkboard/)
+- [Interactive example](http://filipemeneses.github.io/vue-chalkboard/)
 - [Docs](https://github.com/filipemeneses/vue-chalkboard/tree/master/docs/README.md)
